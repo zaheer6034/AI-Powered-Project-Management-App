@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Icon = ({ path }) => (
   <svg
@@ -33,7 +33,26 @@ const SidebarItem = ({ icon, label, active, onClick }) => (
   </div>
 );
 
-const Layout = ({ children, currentView, onNavigate }) => {
+const Layout = ({ children, currentView, onNavigate, tasks = [] }) => {
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    checkDeadlines();
+  }, [tasks]);
+
+  const checkDeadlines = () => {
+    const now = new Date();
+    const upcoming = tasks.filter(task => {
+      if (!task.dueDate || task.completed) return false;
+      const due = new Date(task.dueDate);
+      const diffTime = due - now;
+      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+      return diffHours > 0 && diffHours <= 24;
+    });
+    setAlerts(upcoming);
+  };
+
   return (
     <div className="app-layout">
       {/* Sidebar */}
@@ -73,7 +92,7 @@ const Layout = ({ children, currentView, onNavigate }) => {
         <div className="user-profile">
           <div className="avatar"></div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '14px', fontWeight: '500', color: 'white' }}>User Name</span>
+            <span style={{ fontSize: '14px', fontWeight: '500', color: 'white' }}>Zaheer</span>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pro Plan</span>
           </div>
         </div>
@@ -90,8 +109,64 @@ const Layout = ({ children, currentView, onNavigate }) => {
           </div>
 
           <div className="header-actions">
+            <div style={{ position: 'relative' }}>
+              <button
+                className="btn-icon"
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{ position: 'relative' }}
+              >
+                <Icon path={Icons.Bell} />
+                {alerts.length > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '6px',
+                    right: '6px',
+                    width: '8px',
+                    height: '8px',
+                    background: 'var(--danger)',
+                    borderRadius: '50%',
+                    border: '1px solid var(--bg-app)'
+                  }}></span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  width: '320px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  zIndex: 100,
+                  marginTop: '8px'
+                }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', fontWeight: '600', color: 'white' }}>
+                    Notifications
+                  </div>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {alerts.length === 0 ? (
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                        No upcoming deadlines
+                      </div>
+                    ) : (
+                      alerts.map(task => (
+                        <div key={task.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }} className="nav-item">
+                          <div style={{ fontSize: '14px', color: 'white', marginBottom: '4px' }}>{task.title}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>⚠️ Due soon:</span>
+                            <span>{new Date(task.dueDate).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <Icon path={Icons.Search} />
-            <Icon path={Icons.Bell} />
           </div>
         </header>
 

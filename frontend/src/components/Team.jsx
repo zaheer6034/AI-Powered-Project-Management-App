@@ -9,13 +9,64 @@ function Team({ members = [], tasks = [] }) {
         return { total: memberTasks.length, active, completed };
     };
 
+    // Calculate max tasks for chart scaling
+    const maxTasks = Math.max(...members.map(m => getMemberStats(m.id).active), 1);
+
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ margin: 0, color: 'white' }}>Team Members</h2>
+                <h2 style={{ margin: 0, color: 'white' }}>Team Overview</h2>
                 <button className="btn btn-primary">Invite Member</button>
             </div>
 
+            {/* Workload Distribution Chart */}
+            <div className="add-task-card" style={{ marginBottom: '32px' }}>
+                <h3 style={{ margin: '0 0 24px 0', color: 'white' }}>Workload Distribution</h3>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    height: '200px',
+                    gap: '16px',
+                    padding: '0 16px 24px 16px',
+                    borderBottom: '1px solid var(--border-subtle)'
+                }}>
+                    {members.map(member => {
+                        const stats = getMemberStats(member.id);
+                        const heightPercentage = (stats.active / maxTasks) * 100;
+                        return (
+                            <div key={member.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                <div style={{
+                                    width: '100%',
+                                    maxWidth: '40px',
+                                    height: `${Math.max(heightPercentage, 5)}%`,
+                                    background: member.color,
+                                    borderRadius: '4px 4px 0 0',
+                                    transition: 'height 0.5s ease',
+                                    position: 'relative',
+                                    opacity: 0.8
+                                }}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-24px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        color: 'white',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {stats.active}
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                                    {member.name.split(' ')[0]}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <h3 style={{ color: 'white', marginBottom: '16px' }}>Team Members</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
                 {members.map(member => {
                     const stats = getMemberStats(member.id);

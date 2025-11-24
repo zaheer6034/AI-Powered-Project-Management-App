@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = 5000;
@@ -11,6 +12,9 @@ const PORT = 5000;
 const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Initialize Gemini API
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -28,6 +32,49 @@ const toCamelCase = (obj) => {
     }
     return obj;
 };
+
+// --- AI ENDPOINT ---
+
+app.post('/api/ai/chat', async (req, res) => {
+    try {
+        const { message, context } = req.body;
+
+        // Construct the prompt with context
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const systemPrompt = `
+        You are Orbit AI, an advanced project management assistant.
+        
+        CURRENT CONTEXT:
+        - Projects: ${JSON.stringify(context.projects?.map(p => ({ name: p.name, status: p.status, progress: p.completedTasks + '/' + p.totalTasks })) || [])}
+        - Tasks: ${JSON.stringify(context.tasks?.map(t => ({ title: t.title, status: t.completed ? 'done' : 'pending', due: t.dueDate, assignees: t.assignees })) || [])}
+        - Team Members: ${JSON.stringify(context.members?.map(m => ({ id: m.id, name: m.name, role: m.role })) || [])}
+        
+        USER REQUEST: "${message}"
+        
+        INSTRUCTIONS:
+        1. Answer the user's question based on the context.
+        2. If asked about workload, calculate the number of pending tasks for each team member.
+        3. Identify underperforming (0 tasks) or overperforming (many tasks) members if asked.
+        4. If the user wants to perform an action (navigate, create task), include a JSON block at the END of your response.
+        
+        AVAILABLE ACTIONS:
+        - Navigate: {"action": "NAVIGATE", "payload": "dashboard" | "projects" | "team"}
+        - Create Task: {"action": "CREATE_TASK", "payload": { "title": "Task Name" }}
+        
+        Keep your response concise, professional, and futuristic.
+        `;
+
+        const result = await model.generateContent(systemPrompt);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({ reply: text });
+    } catch (error) {
+        console.error('AI Error:', error);
+        res.status(500).json({ error: 'AI processing failed', details: error.message });
+    }
+});
 
 // --- PROJECTS ENDPOINTS ---
 
@@ -243,5 +290,10 @@ app.listen(PORT, () => {
         console.log('⚠️  WARNING: Please set SUPABASE_URL and SUPABASE_ANON_KEY in .env file');
     } else {
         console.log('✅ Connected to Supabase');
+    }
+    if (!process.env.GEMINI_API_KEY) {
+        console.log('⚠️  WARNING: GEMINI_API_KEY not found in .env');
+    } else {
+        console.log('✅ Gemini AI Initialized');
     }
 });

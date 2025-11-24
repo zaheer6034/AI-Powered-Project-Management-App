@@ -6,6 +6,8 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Team from './components/Team';
 import Projects from './components/Projects';
+import AICopilot from './components/AICopilot';
+import Settings from './components/Settings';
 
 // Mock Team Members Data
 const TEAM_MEMBERS = [
@@ -91,12 +93,12 @@ function App() {
             setTasks(tasks.map((t) => (t.id === id ? updatedTask : t)));
 
             // Check for project completion celebration
-            if (completed && updatedTask.project_id) {
-                const projectTasks = tasks.filter(t => t.project_id === updatedTask.project_id);
+            if (completed && updatedTask.projectId) {
+                const projectTasks = tasks.filter(t => t.projectId === updatedTask.projectId);
                 const allCompleted = projectTasks.every(t => t.id === id ? true : t.completed);
                 if (allCompleted && projectTasks.length > 0) {
                     // Auto-update project status to completed
-                    await handleUpdateProject(updatedTask.project_id, { status: 'completed' });
+                    await handleUpdateProject(updatedTask.projectId, { status: 'completed' });
                 }
             }
 
@@ -126,6 +128,26 @@ function App() {
             setProjects(projectsData);
         } catch (err) {
             console.error('Failed to delete task:', err);
+        }
+    };
+
+    // AI Command Handler
+    const handleAICommand = (command) => {
+        console.log('AI Command received:', command);
+        switch (command.type) {
+            case 'NAVIGATE':
+                setCurrentView(command.payload);
+                setSelectedProject(null);
+                break;
+            case 'CREATE_TASK':
+                // Open add task modal with pre-filled title if possible, 
+                // or just create it directly if we had full AI parsing.
+                // For now, let's open the modal.
+                setIsAddTaskOpen(true);
+                // In a real app, we'd pass the title to the form
+                break;
+            default:
+                console.warn('Unknown AI command:', command.type);
         }
     };
 
@@ -164,18 +186,18 @@ function App() {
                 return <Dashboard tasks={tasks} projects={projects} members={TEAM_MEMBERS} />;
             case 'projects':
                 if (selectedProject) {
-                    // Filter tasks for this project - handle both null and matching project_id
+                    // Filter tasks for this project - handle both null and matching projectId
                     const projectTasks = tasks.filter(t => {
-                        // If task has no project_id, don't show it
-                        if (!t.project_id) return false;
-                        // Show if project_id matches
-                        return t.project_id === selectedProject.id;
+                        // If task has no projectId, don't show it
+                        if (!t.projectId) return false;
+                        // Show if projectId matches
+                        return t.projectId === selectedProject.id;
                     });
 
                     console.log('Selected project:', selectedProject);
                     console.log('All tasks:', tasks);
                     console.log('Filtered project tasks:', projectTasks);
-                    console.log('Task project_ids:', tasks.map(t => ({ id: t.id, title: t.title, project_id: t.project_id })));
+                    console.log('Task projectIds:', tasks.map(t => ({ id: t.id, title: t.title, projectId: t.projectId })));
 
                     return (
                         <>
@@ -197,7 +219,7 @@ function App() {
 
                             {isAddTaskOpen && (
                                 <AddTask
-                                    onAdd={(data) => handleAddTask({ ...data, project_id: selectedProject.id })}
+                                    onAdd={(data) => handleAddTask({ ...data, projectId: selectedProject.id })}
                                     onCancel={() => setIsAddTaskOpen(false)}
                                     members={TEAM_MEMBERS}
                                     projects={projects}
@@ -209,7 +231,7 @@ function App() {
                                 <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid var(--warning)', borderRadius: '8px', marginBottom: '16px' }}>
                                     <p style={{ margin: 0, color: 'var(--warning)' }}>
                                         ℹ️ No tasks found for this project. You have {tasks.length} total task(s) in the database.
-                                        {tasks.filter(t => !t.project_id).length > 0 && ` (${tasks.filter(t => !t.project_id).length} unassigned to any project)`}
+                                        {tasks.filter(t => !t.projectId).length > 0 && ` (${tasks.filter(t => !t.projectId).length} unassigned to any project)`}
                                     </p>
                                 </div>
                             )}
@@ -235,15 +257,16 @@ function App() {
             case 'team':
                 return <Team members={TEAM_MEMBERS} tasks={tasks} />;
             case 'settings':
-                return <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '48px' }}>Settings coming soon...</div>;
+                return <Settings />;
             default:
                 return <Dashboard tasks={tasks} projects={projects} members={TEAM_MEMBERS} />;
         }
     };
 
     return (
-        <Layout currentView={currentView} onNavigate={(view) => { setCurrentView(view); setSelectedProject(null); }}>
+        <Layout currentView={currentView} onNavigate={(view) => { setCurrentView(view); setSelectedProject(null); }} tasks={tasks}>
             {renderContent()}
+            <AICopilot onCommand={handleAICommand} context={{ tasks, projects, members: TEAM_MEMBERS }} />
         </Layout>
     );
 }
