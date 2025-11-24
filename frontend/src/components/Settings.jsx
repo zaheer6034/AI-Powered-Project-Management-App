@@ -13,7 +13,8 @@ function Settings() {
         { id: 'profile', label: 'Profile' },
         { id: 'appearance', label: 'Appearance' },
         { id: 'notifications', label: 'Notifications' },
-        { id: 'account', label: 'Account' }
+        { id: 'account', label: 'Account' },
+        { id: 'support', label: 'Support & Contact' }
     ];
 
     return (
@@ -198,6 +199,108 @@ function Settings() {
                                     Once you delete your account, there is no going back. Please be certain.
                                 </p>
                                 <button className="btn" style={{ background: 'var(--danger)', color: 'white' }}>Delete Account</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'support' && (
+                        <div className="add-task-card" style={{ margin: 0 }}>
+                            <h3 style={{ marginTop: 0, color: 'white', marginBottom: '24px' }}>Contact Developer</h3>
+
+                            <div style={{ marginBottom: '32px' }}>
+                                <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                                    Having trouble with Orbit? Or maybe you have a feature request?
+                                    Reach out to the developer directly.
+                                </p>
+
+                                <div style={{
+                                    marginTop: '24px',
+                                    padding: '24px',
+                                    background: 'var(--bg-app)',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border-subtle)'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                                        <div style={{
+                                            width: '48px',
+                                            height: '48px',
+                                            borderRadius: '50%',
+                                            background: 'var(--primary)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'white',
+                                            fontWeight: 'bold',
+                                            fontSize: '20px'
+                                        }}>
+                                            ZA
+                                        </div>
+                                        <div>
+                                            <div style={{ color: 'white', fontWeight: '600', fontSize: '16px' }}>Zaheer Abbas</div>
+                                            <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Lead Developer</div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gap: '12px' }}>
+                                        <a href="mailto:zaheer@example.com" style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            color: 'var(--text-accent)',
+                                            textDecoration: 'none',
+                                            padding: '12px',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            borderRadius: '6px',
+                                            transition: 'background 0.2s'
+                                        }}>
+                                            <span>📧</span>
+                                            <span>zaheer@example.com</span>
+                                        </a>
+                                        <a href="#" style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            color: 'var(--text-accent)',
+                                            textDecoration: 'none',
+                                            padding: '12px',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            borderRadius: '6px'
+                                        }}>
+                                            <span>Github: 🐙</span>
+                                            <span>@zaheer6034</span>
+                                        </a>
+                                        <a href="#" style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            color: 'var(--text-accent)',
+                                            textDecoration: 'none',
+                                            padding: '12px',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            borderRadius: '6px'
+                                        }}>
+                                            <span>💼</span>
+                                            <span>https://www.linkedin.com/in/zaheer--abbas/</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 style={{ color: 'white', marginBottom: '16px' }}>Send a Message</h4>
+                            <div className="form-group">
+                                <label className="form-label">Subject</label>
+                                <select className="form-input">
+                                    <option>Bug Report</option>
+                                    <option>Feature Request</option>
+                                    <option>General Inquiry</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Message</label>
+                                <textarea className="form-input" rows="4" placeholder="How can we help you?"></textarea>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-primary">Send Message</button>
                             </div>
                         </div>
                     )}

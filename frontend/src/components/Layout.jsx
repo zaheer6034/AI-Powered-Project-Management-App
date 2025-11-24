@@ -96,6 +96,11 @@ const Layout = ({ children, currentView, onNavigate, tasks = [] }) => {
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pro Plan</span>
           </div>
         </div>
+
+        <div style={{ padding: '16px 20px', fontSize: '11px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ marginBottom: '4px' }}>Orbit v2.0</div>
+          <div>Built by <span style={{ color: 'var(--primary)', cursor: 'pointer' }} onClick={() => onNavigate('settings')}>Zaheer Abbas</span></div>
+        </div>
       </aside>
 
       {/* Main Content */}
