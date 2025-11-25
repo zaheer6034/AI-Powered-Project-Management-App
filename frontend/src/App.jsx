@@ -8,6 +8,7 @@ import Team from './components/Team';
 import Projects from './components/Projects';
 import AICopilot from './components/AICopilot';
 import Settings from './components/Settings';
+import KanbanBoard from './components/KanbanBoard';
 
 // Mock Team Members Data
 const TEAM_MEMBERS = [
@@ -26,6 +27,7 @@ function App() {
     const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
     const [currentView, setCurrentView] = useState('dashboard');
     const [selectedProject, setSelectedProject] = useState(null);
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'board'
 
     useEffect(() => {
         loadData();
@@ -194,11 +196,6 @@ function App() {
                         return t.projectId === selectedProject.id;
                     });
 
-                    console.log('Selected project:', selectedProject);
-                    console.log('All tasks:', tasks);
-                    console.log('Filtered project tasks:', projectTasks);
-                    console.log('Task projectIds:', tasks.map(t => ({ id: t.id, title: t.title, projectId: t.projectId })));
-
                     return (
                         <>
                             <div className="page-header">
@@ -209,12 +206,64 @@ function App() {
                                     </div>
                                     <p className="page-subtitle">{selectedProject.description}</p>
                                 </div>
-                                <button
-                                    onClick={() => setIsAddTaskOpen(!isAddTaskOpen)}
-                                    className="btn btn-primary"
-                                >
-                                    + New Task
-                                </button>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                    <div style={{
+                                        background: 'var(--bg-card)',
+                                        padding: '4px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-subtle)',
+                                        display: 'flex',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                    }}>
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            style={{
+                                                padding: '8px 16px',
+                                                borderRadius: '6px',
+                                                background: viewMode === 'list' ? 'var(--primary)' : 'transparent',
+                                                color: viewMode === 'list' ? 'white' : 'var(--text-muted)',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontWeight: '500',
+                                                fontSize: '14px',
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                            List
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('board')}
+                                            style={{
+                                                padding: '8px 16px',
+                                                borderRadius: '6px',
+                                                background: viewMode === 'board' ? 'var(--primary)' : 'transparent',
+                                                color: viewMode === 'board' ? 'white' : 'var(--text-muted)',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontWeight: '500',
+                                                fontSize: '14px',
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                                            Board
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsAddTaskOpen(!isAddTaskOpen)}
+                                        className="btn btn-primary"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}
+                                    >
+                                        <span style={{ fontSize: '18px', lineHeight: '1' }}>+</span> New Task
+                                    </button>
+                                </div>
                             </div>
 
                             {isAddTaskOpen && (
@@ -236,13 +285,21 @@ function App() {
                                 </div>
                             )}
 
-                            <TaskList
-                                tasks={projectTasks}
-                                members={TEAM_MEMBERS}
-                                onToggle={handleToggleTask}
-                                onDelete={handleDeleteTask}
-                                onUpdate={handleUpdateTask}
-                            />
+                            {viewMode === 'list' ? (
+                                <TaskList
+                                    tasks={projectTasks}
+                                    members={TEAM_MEMBERS}
+                                    onToggle={handleToggleTask}
+                                    onDelete={handleDeleteTask}
+                                    onUpdate={handleUpdateTask}
+                                />
+                            ) : (
+                                <KanbanBoard
+                                    tasks={projectTasks}
+                                    onUpdateTask={handleUpdateTask}
+                                    members={TEAM_MEMBERS}
+                                />
+                            )}
                         </>
                     );
                 }

@@ -9,8 +9,39 @@ function Team({ members = [], tasks = [] }) {
         return { total: memberTasks.length, active, completed };
     };
 
-    // Calculate max tasks for chart scaling
-    const maxTasks = Math.max(...members.map(m => getMemberStats(m.id).active), 1);
+    // Prepare data for the chart
+    const chartData = members.map((member, index) => {
+        const stats = getMemberStats(member.id);
+        return {
+            ...member,
+            stats,
+            value: stats.active
+        };
+    });
+
+    const maxValue = Math.max(...chartData.map(d => d.value), 5); // Minimum max of 5 for scale
+    const chartHeight = 200;
+    const chartWidth = 800; // Internal SVG coordinate width
+    const padding = 40;
+    const availableWidth = chartWidth - (padding * 2);
+    const availableHeight = chartHeight - (padding * 2);
+
+    // Calculate points
+    const points = chartData.map((data, index) => {
+        const x = padding + (index * (availableWidth / (chartData.length - 1 || 1)));
+        const y = chartHeight - padding - ((data.value / maxValue) * availableHeight);
+        return { x, y, ...data };
+    });
+
+    // Generate path string
+    const pathData = points.length > 1
+        ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`
+        : `M ${padding},${chartHeight - padding} L ${chartWidth - padding},${chartHeight - padding}`; // Fallback for single point
+
+    // Generate area fill path (close the loop to the bottom)
+    const areaPathData = points.length > 1
+        ? `${pathData} L ${points[points.length - 1].x},${chartHeight - padding} L ${points[0].x},${chartHeight - padding} Z`
+        : '';
 
     return (
         <div>
@@ -19,50 +50,100 @@ function Team({ members = [], tasks = [] }) {
                 <button className="btn btn-primary">Invite Member</button>
             </div>
 
-            {/* Workload Distribution Chart */}
+            {/* Workload Distribution Line Chart */}
             <div className="add-task-card" style={{ marginBottom: '32px' }}>
                 <h3 style={{ margin: '0 0 24px 0', color: 'white' }}>Workload Distribution</h3>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    height: '200px',
-                    gap: '16px',
-                    padding: '0 16px 24px 16px',
-                    borderBottom: '1px solid var(--border-subtle)'
-                }}>
-                    {members.map(member => {
-                        const stats = getMemberStats(member.id);
-                        const heightPercentage = (stats.active / maxTasks) * 100;
-                        return (
-                            <div key={member.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                <div style={{
-                                    width: '100%',
-                                    maxWidth: '40px',
-                                    height: `${Math.max(heightPercentage, 5)}%`,
-                                    background: member.color,
-                                    borderRadius: '4px 4px 0 0',
-                                    transition: 'height 0.5s ease',
-                                    position: 'relative',
-                                    opacity: 0.8
-                                }}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '-24px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        color: 'white',
-                                        fontSize: '12px',
-                                        fontWeight: 'bold'
-                                    }}>
-                                        {stats.active}
-                                    </div>
-                                </div>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
-                                    {member.name.split(' ')[0]}
-                                </div>
-                            </div>
-                        );
-                    })}
+                <div style={{ width: '100%', overflowX: 'auto' }}>
+                    <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: '100%', height: 'auto', minWidth: '600px' }}>
+                        {/* Grid Lines */}
+                        {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                            const y = chartHeight - padding - (ratio * availableHeight);
+                            return (
+                                <g key={ratio}>
+                                    <line
+                                        x1={padding}
+                                        y1={y}
+                                        x2={chartWidth - padding}
+                                        y2={y}
+                                        stroke="var(--border-subtle)"
+                                        strokeWidth="1"
+                                        strokeDasharray="4 4"
+                                    />
+                                    <text
+                                        x={padding - 10}
+                                        y={y + 4}
+                                        fill="var(--text-muted)"
+                                        fontSize="10"
+                                        textAnchor="end"
+                                    >
+                                        {Math.round(ratio * maxValue)}
+                                    </text>
+                                </g>
+                            );
+                        })}
+
+                        {/* Area Fill */}
+                        <path d={areaPathData} fill="rgba(59, 130, 246, 0.1)" />
+
+                        {/* Line */}
+                        <path
+                            d={pathData}
+                            fill="none"
+                            stroke="var(--primary)"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+
+                        {/* Data Points and Labels */}
+                        {points.map((point, i) => (
+                            <g key={point.id}>
+                                {/* Vertical Line to X-axis (optional, for better readability) */}
+                                <line
+                                    x1={point.x}
+                                    y1={point.y}
+                                    x2={point.x}
+                                    y2={chartHeight - padding}
+                                    stroke="var(--border-subtle)"
+                                    strokeWidth="1"
+                                    opacity="0.3"
+                                />
+
+                                {/* Point Circle */}
+                                <circle
+                                    cx={point.x}
+                                    cy={point.y}
+                                    r="6"
+                                    fill="var(--bg-card)"
+                                    stroke={point.color}
+                                    strokeWidth="3"
+                                />
+
+                                {/* Value Label */}
+                                <text
+                                    x={point.x}
+                                    y={point.y - 15}
+                                    fill="white"
+                                    fontSize="12"
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                >
+                                    {point.value}
+                                </text>
+
+                                {/* X-axis Label (Name) */}
+                                <text
+                                    x={point.x}
+                                    y={chartHeight - 10}
+                                    fill="var(--text-muted)"
+                                    fontSize="12"
+                                    textAnchor="middle"
+                                >
+                                    {point.name.split(' ')[0]}
+                                </text>
+                            </g>
+                        ))}
+                    </svg>
                 </div>
             </div>
 

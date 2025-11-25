@@ -76,6 +76,34 @@ app.post('/api/ai/chat', async (req, res) => {
     }
 });
 
+app.post('/api/ai/breakdown', async (req, res) => {
+    try {
+        const { taskTitle } = req.body;
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const prompt = `
+        You are an expert project manager. Break down the following task into a checklist of 3-5 actionable subtasks.
+        Task: "${taskTitle}"
+        
+        Return ONLY the list of subtasks as a JSON array of strings. Example: ["Draft outline", "Research competitors", "Write first draft"].
+        Do not include markdown formatting or extra text.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Clean up response to ensure valid JSON
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const subtasks = JSON.parse(jsonStr);
+
+        res.json({ subtasks });
+    } catch (error) {
+        console.error('AI Breakdown Error:', error);
+        res.status(500).json({ error: 'Failed to generate breakdown' });
+    }
+});
+
 // --- PROJECTS ENDPOINTS ---
 
 // GET /api/projects
@@ -220,12 +248,14 @@ app.post('/api/tasks', async (req, res) => {
             .insert([
                 {
                     title: title,
+                    description: req.body.description || '',
                     due_date: dueDate,
                     category: category,
                     assignees: req.body.assignees || [],
                     project_id: req.body.projectId || null,
                     is_blocker: req.body.isBlocker || false,
-                    completed: false
+                    completed: false,
+                    status: req.body.status || 'todo'
                 }
             ])
             .select();
@@ -243,12 +273,19 @@ app.put('/api/tasks/:id', async (req, res) => {
     try {
         const updates = {};
         if (req.body.title !== undefined) updates.title = req.body.title;
+        if (req.body.description !== undefined) updates.description = req.body.description;
         if (req.body.dueDate !== undefined) updates.due_date = req.body.dueDate;
         if (req.body.category !== undefined) updates.category = req.body.category;
         if (req.body.assignees !== undefined) updates.assignees = req.body.assignees;
         if (req.body.projectId !== undefined) updates.project_id = req.body.projectId;
         if (req.body.isBlocker !== undefined) updates.is_blocker = req.body.isBlocker;
         if (req.body.completed !== undefined) updates.completed = req.body.completed;
+        if (req.body.status !== undefined) updates.status = req.body.status;
+
+        // Sync completed status with kanban status
+        if (req.body.status === 'done') updates.completed = true;
+        if (req.body.status === 'todo' || req.body.status === 'in_progress') updates.completed = false;
+        if (req.body.completed === true) updates.status = 'done';
 
         const { data, error } = await supabase
             .from('tasks')
