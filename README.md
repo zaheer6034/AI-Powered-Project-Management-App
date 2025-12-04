@@ -2,7 +2,7 @@
 
 Orbit is a modern, AI-powered project management platform designed to streamline team collaboration and productivity. Built with a focus on futuristic UI and intelligent automation, Orbit goes beyond simple task tracking by integrating context-aware AI to assist with workload management, task breakdown, and navigation.
 
-![Orbit Dashboard](https://via.placeholder.com/1200x600/0f1115/3b82f6?text=Orbit+Dashboard+Preview)
+![Orbit Dashboard](![Main Dashboard](image.png))![Project Dashboard](image-1.png)![Team Dashboard](image-2.png)
 
 ## 🚀 Key Features
 

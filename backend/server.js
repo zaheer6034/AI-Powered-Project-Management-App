@@ -6,7 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
